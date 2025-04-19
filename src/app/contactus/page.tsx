@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaMapMarkerAlt } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import HeroSection from "../Components/HeroSection";
 import Confetti from 'react-confetti';
-import { useInView } from 'react-intersection-observer'; // For lazy-loading map
+import { useInView } from 'react-intersection-observer';
 
 // Constants for reusability
 const SOCIAL_LINKS = [
@@ -66,6 +66,9 @@ interface FormErrors {
   phone?: string;
 }
 
+// Type for string-valued FormData keys
+type StringFormDataKeys = keyof Pick<FormData, 'firstName' | 'email' | 'phone' | 'message'>;
+
 // Reusable Form Field Component
 const FormField = ({
   type,
@@ -77,7 +80,7 @@ const FormField = ({
   error,
 }: {
   type: string;
-  name: string;
+  name: StringFormDataKeys; // Use refined type
   placeholder: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
@@ -86,7 +89,7 @@ const FormField = ({
 }) => {
   const fieldVariants = {
     initial: { scale: 1 },
-    hover: { scale: 1.02, transition: { duration: 0.2 } }, // Reduced scale for performance
+    hover: { scale: 1.02, transition: { duration: 0.2 } },
     focus: { scale: 1.02, boxShadow: "0 0 6px rgba(37, 99, 235, 0.2)", transition: { duration: 0.2 } },
   };
 
@@ -127,7 +130,7 @@ export default function Contact() {
   const [showPopup, setShowPopup] = useState(false);
   const [submitError, setSubmitError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const { ref, inView } = useInView({ triggerOnce: true }); // Lazy-load map
+  const { ref, inView } = useInView({ triggerOnce: true });
 
   // Validate form fields
   const validateForm = (): FormErrors => {
@@ -149,7 +152,6 @@ export default function Contact() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Real-time validation
     const errors = validateForm();
     setFormErrors((prev) => ({ ...prev, [name]: errors[name as keyof FormErrors] }));
   };
@@ -253,20 +255,20 @@ export default function Contact() {
           {/* Contact Form */}
           <div className="w-full lg:w-1/2 bg-white p-6 rounded-xl shadow-lg">
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-              {[
+              {([
                 { type: "text", name: "firstName", placeholder: "First Name", required: true },
                 { type: "email", name: "email", placeholder: "Email", required: true },
                 { type: "tel", name: "phone", placeholder: "Enter Phone Number", required: true },
-              ].map((field) => (
+              ] as const).map((field) => (
                 <FormField
                   key={field.name}
                   type={field.type}
                   name={field.name}
                   placeholder={field.placeholder}
-                  value={formData[field.name as keyof FormData]}
+                  value={formData[field.name]}
                   onChange={handleInputChange}
                   required={field.required}
-                  error={formErrors[field.name as keyof FormErrors]}
+                  error={formErrors[field.name]}
                 />
               ))}
               <div>
@@ -415,12 +417,12 @@ export default function Contact() {
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3443.162194584305!2d-97.75456308414442!3d30.359188081767776!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8644b5e8b2e5b5e1%3A0x3e4a2b5e5b5e5b5e!2s5900%20Balcones%20Dr%2C%20Austin%2C%20TX%2078731%2C%20USA!5e0!3m2!1sen!2sin!4v1698191234567!5m2!1sen!2sin"
               width="100%"
-              height="400" // Increased height for better visibility
+              height="400"
               style={{ border: 0, display: 'block' }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              className="rounded-xl w-full sm:h-[300px] md:h-[350px] lg:h-[400px]" // Responsive height
+              className="rounded-xl w-full sm:h-[300px] md:h-[350px] lg:h-[400px]"
               title="Our Location Map"
             />
           )}
@@ -445,7 +447,7 @@ export default function Contact() {
                 width={window.innerWidth}
                 height={window.innerHeight}
                 recycle={false}
-                numberOfPieces={150} // Reduced for performance
+                numberOfPieces={150}
                 gravity={0.15}
                 className="absolute inset-0"
               />

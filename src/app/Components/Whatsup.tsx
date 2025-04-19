@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react'; // Replaced useCallback with useMemo
 import { FaWhatsapp } from 'react-icons/fa';
 import { debounce, DebouncedFunc } from 'lodash-es';
 
@@ -21,15 +21,16 @@ const WhatsAppConnect = ({
 }: WhatsAppConnectProps) => {
   const [showPopup, setShowPopup] = useState(false);
 
-  // Typed debounced scroll handler
-  const handleScroll: DebouncedFunc<() => void> = useCallback(
-    debounce(() => {
-      if (window.scrollY > scrollThreshold && !showPopup) {
-        setTimeout(() => {
-          setShowPopup(true);
-        }, popupDelay);
-      }
-    }, 100),
+  // Memoize the debounced scroll handler
+  const handleScroll: DebouncedFunc<() => void> = useMemo(
+    () =>
+      debounce(() => {
+        if (window.scrollY > scrollThreshold && !showPopup) {
+          setTimeout(() => {
+            setShowPopup(true);
+          }, popupDelay);
+        }
+      }, 100),
     [showPopup, scrollThreshold, popupDelay]
   );
 
@@ -43,9 +44,9 @@ const WhatsAppConnect = ({
 
   const whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
 
-  const closePopup = useCallback(() => {
+  const closePopup = () => {
     setShowPopup(false);
-  }, []);
+  };
 
   return (
     <div className="fixed bottom-5 right-5 z-50">
@@ -61,7 +62,9 @@ const WhatsAppConnect = ({
 
       {showPopup && (
         <div className="absolute bottom-16 right-0 bg-white p-4 rounded-lg shadow-lg flex items-center justify-between space-x-3 w-48 sm:w-64 md:w-72 transition-all duration-300 animate-fadeIn">
-          <p className="text-gray-800 text-sm">{popupMessage}</p>
+          <p className="text-gray-800 text-sm" style={{ fontFamily: "'Roboto', sans-serif" }}>
+            {popupMessage}
+          </p>
           <button
             onClick={closePopup}
             className="text-gray-500 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-full p-1"

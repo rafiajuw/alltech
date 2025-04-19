@@ -1,11 +1,57 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaMapMarkerAlt } from 'react-icons/fa';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import HeroSection from "../Components/HeroSection";
 import Confetti from 'react-confetti';
+import { useInView } from 'react-intersection-observer'; // For lazy-loading map
 
+// Constants for reusability
+const SOCIAL_LINKS = [
+  { href: "https://facebook.com", icon: <FaFacebookF className="w-5 h-5" />, label: "Facebook" },
+  { href: "https://twitter.com", icon: <FaTwitter className="w-5 h-5" />, label: "Twitter" },
+  { href: "https://instagram.com", icon: <FaInstagram className="w-5 h-5" />, label: "Instagram" },
+  { href: "https://linkedin.com", icon: <FaLinkedinIn className="w-5 h-5" />, label: "LinkedIn" },
+];
+
+const CONTACT_INFO = [
+  {
+    label: "E-MAIL",
+    content: (
+      <>
+        <a href="mailto:sales@alltechcloudservices.com" className="hover:underline hover:text-blue-300 transition-colors duration-300">
+          sales@alltechcloudservices.com
+        </a>
+        <br />
+        <a href="mailto:ipv4@alltechcloudservices.com" className="hover:underline hover:text-blue-300 transition-colors duration-300">
+          ipv4@alltechcloudservices.com
+        </a>
+      </>
+    ),
+  },
+  {
+    label: "PHONE",
+    content: (
+      <a href="tel:+17273045613" className="hover:underline hover:text-blue-300 transition-colors duration-300">
+        +1 (727) 304-5613
+      </a>
+    ),
+  },
+  {
+    label: "SKYPE",
+    content: (
+      <a href="skype:live:cid.ebf5e564e562929?chat" className="hover:underline hover:text-blue-300 transition-colors duration-300">
+        live:cid.ebf5e564e562929
+      </a>
+    ),
+  },
+  { label: "ADDRESS", content: "5900 Balcones Drive, STE 1794 Austin, TX 78731" },
+];
+
+const SERVICES = ["Buy IPv4", "Sell IPv4", "Rent IPv4"];
+
+// Interfaces for type safety
 interface FormData {
   firstName: string;
   email: string;
@@ -13,6 +59,61 @@ interface FormData {
   service: string[];
   message: string;
 }
+
+interface FormErrors {
+  firstName?: string;
+  email?: string;
+  phone?: string;
+}
+
+// Reusable Form Field Component
+const FormField = ({
+  type,
+  name,
+  placeholder,
+  value,
+  onChange,
+  required,
+  error,
+}: {
+  type: string;
+  name: string;
+  placeholder: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  required?: boolean;
+  error?: string;
+}) => {
+  const fieldVariants = {
+    initial: { scale: 1 },
+    hover: { scale: 1.02, transition: { duration: 0.2 } }, // Reduced scale for performance
+    focus: { scale: 1.02, boxShadow: "0 0 6px rgba(37, 99, 235, 0.2)", transition: { duration: 0.2 } },
+  };
+
+  return (
+    <div>
+      <motion.input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`w-full p-3 text-base border ${error ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
+        required={required}
+        whileHover="hover"
+        whileFocus="focus"
+        variants={fieldVariants}
+        aria-invalid={error ? "true" : "false"}
+        aria-describedby={error ? `${name}-error` : undefined}
+      />
+      {error && (
+        <p id={`${name}-error`} className="text-red-500 text-sm mt-1" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+};
 
 export default function Contact() {
   const [formData, setFormData] = useState<FormData>({
@@ -22,39 +123,53 @@ export default function Contact() {
     service: [],
     message: "",
   });
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [showPopup, setShowPopup] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [submitError, setSubmitError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const { ref, inView } = useInView({ triggerOnce: true }); // Lazy-load map
 
-  useEffect(() => {
-    console.log("Contact component mounted");
-    console.log("Form data:", formData);
-  }, [formData]);
+  // Validate form fields
+  const validateForm = (): FormErrors => {
+    const errors: FormErrors = {};
+    if (!formData.firstName.trim()) errors.firstName = "First name is required";
+    if (!formData.email.trim()) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Please enter a valid email";
+    }
+    if (!formData.phone.trim()) {
+      errors.phone = "Phone number is required";
+    } else if (!/^\+?\d{10,15}$/.test(formData.phone.replace(/\D/g, ''))) {
+      errors.phone = "Please enter a valid phone number";
+    }
+    return errors;
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Real-time validation
+    const errors = validateForm();
+    setFormErrors((prev) => ({ ...prev, [name]: errors[name as keyof FormErrors] }));
   };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
-    if (checked) {
-      setFormData((prev) => ({ ...prev, service: [...prev.service, value] }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        service: prev.service.filter((item) => item !== value),
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      service: checked ? [...prev.service, value] : prev.service.filter((item) => item !== value),
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
+    setSubmitError("");
     setIsLoading(true);
 
-    if (!formData.firstName || !formData.email || !formData.phone) {
-      setError("Please fill in all required fields.");
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       setIsLoading(false);
       return;
     }
@@ -62,89 +177,62 @@ export default function Contact() {
     try {
       const response = await fetch("/api/send-email", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          email: formData.email,
-          phone: formData.phone,
-          service: formData.service,
-          message: formData.message,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
+        const result = await response.json();
         throw new Error(result.error || "Failed to send email.");
       }
 
       setShowPopup(true);
-      setFormData({
-        firstName: "",
-        email: "",
-        phone: "",
-        service: [],
-        message: "",
-      });
+      setFormData({ firstName: "", email: "", phone: "", service: [], message: "" });
+      setFormErrors({});
     } catch (error) {
       console.error("Error sending email:", error);
-      setError("There was an error submitting the form. Please try again.");
+      setSubmitError("Failed to submit the form. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Animation for form fields on hover and focus
+  // Animation variants
   const fieldVariants = {
     initial: { scale: 1 },
-    hover: {
-      scale: 1.05,
-      transition: { duration: 0.3 },
-    },
-    focus: {
-      scale: 1.05,
-      boxShadow: "0 0 8px rgba(37, 99, 235, 0.3)",
-      transition: { duration: 0.3 },
-    },
+    hover: { scale: 1.02, transition: { duration: 0.2 } },
+    focus: { scale: 1.02, boxShadow: "0 0 6px rgba(37, 99, 235, 0.2)", transition: { duration: 0.2 } },
   };
 
-  // Animation for the "Submit" button (hover only)
   const buttonVariants = {
-    hover: {
-      scale: 1.05,
-      boxShadow: "0 0 10px rgba(37, 99, 235, 0.5)",
-      transition: { duration: 0.3 },
-    },
+    hover: { scale: 1.05, boxShadow: "0 0 8px rgba(37, 99, 235, 0.4)", transition: { duration: 0.2 } },
     tap: { scale: 0.95 },
   };
 
-  // Animation for social media icons (hover only)
   const iconVariants = {
-    hover: {
-      scale: 1.2,
-      y: -5,
-      transition: { duration: 0.3 },
-    },
+    hover: { scale: 1.2, y: -4, transition: { duration: 0.2 } },
   };
 
-  // Animation for the popup (simple fade-in)
   const popupVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { duration: 0.5, ease: "easeOut" },
-    },
+    hidden: { opacity: 0, y: -20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-gray-100">
+      {/* SEO Meta Tags */}
+      <head>
+        <title>Contact Us | AllTech Cloud Services</title>
+        <meta name="description" content="Get in touch with AllTech Cloud Services to buy, sell, or lease IPv4 addresses. Reach us via email, phone, or our Austin office." />
+      </head>
+
       {/* Hero Section */}
       {HeroSection ? (
         <HeroSection />
       ) : (
-        <p className="text-center text-red-500">HeroSection component is missing.</p>
+        <p className="text-center text-red-500" role="alert">
+          HeroSection component is missing.
+        </p>
       )}
 
       {/* Contact Form Section */}
@@ -164,33 +252,32 @@ export default function Contact() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Contact Form */}
           <div className="w-full lg:w-1/2 bg-white p-6 rounded-xl shadow-lg">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               {[
                 { type: "text", name: "firstName", placeholder: "First Name", required: true },
                 { type: "email", name: "email", placeholder: "Email", required: true },
                 { type: "tel", name: "phone", placeholder: "Enter Phone Number", required: true },
               ].map((field) => (
-                <div key={field.name}>
-                  <motion.input
-                    type={field.type}
-                    name={field.name}
-                    value={formData[field.name as keyof FormData]}
-                    onChange={handleInputChange}
-                    placeholder={field.placeholder}
-                    className="w-full p-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
-                    required={field.required}
-                    whileHover="hover"
-                    whileFocus="focus"
-                    variants={fieldVariants}
-                  />
-                </div>
+                <FormField
+                  key={field.name}
+                  type={field.type}
+                  name={field.name}
+                  placeholder={field.placeholder}
+                  value={formData[field.name as keyof FormData]}
+                  onChange={handleInputChange}
+                  required={field.required}
+                  error={formErrors[field.name as keyof FormErrors]}
+                />
               ))}
               <div>
-                <label className="block text-gray-600 mb-2 font-medium" style={{ fontFamily: "'Roboto', sans-serif" }}>
+                <label
+                  className="block text-gray-600 mb-2 font-medium"
+                  style={{ fontFamily: "'Roboto', sans-serif" }}
+                >
                   Service
                 </label>
                 <div className="space-y-2">
-                  {["Buy IPv4", "Sell IPv4", "Rent IPv4"].map((service) => (
+                  {SERVICES.map((service) => (
                     <motion.label
                       key={service}
                       className="flex items-center"
@@ -204,8 +291,12 @@ export default function Contact() {
                         checked={formData.service.includes(service)}
                         onChange={handleCheckboxChange}
                         className="mr-2 accent-blue-600 w-4 h-4"
+                        aria-label={service}
                       />
-                      <span className="text-gray-700 text-base" style={{ fontFamily: "'Roboto', sans-serif" }}>
+                      <span
+                        className="text-gray-700 text-base"
+                        style={{ fontFamily: "'Roboto', sans-serif" }}
+                      >
                         {service}
                       </span>
                     </motion.label>
@@ -223,11 +314,12 @@ export default function Contact() {
                   whileHover="hover"
                   whileFocus="focus"
                   variants={fieldVariants}
+                  aria-label="Message"
                 />
               </div>
-              {error && (
-                <p className="text-red-500 text-sm">
-                  {error}
+              {submitError && (
+                <p className="text-red-500 text-sm" role="alert">
+                  {submitError}
                 </p>
               )}
               <motion.button
@@ -236,7 +328,8 @@ export default function Contact() {
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 text-base rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 text-base rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center disabled:opacity-50"
+                aria-label="Submit contact form"
               >
                 {isLoading ? (
                   <svg
@@ -244,6 +337,7 @@ export default function Contact() {
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                   >
                     <circle
                       className="opacity-25"
@@ -273,30 +367,7 @@ export default function Contact() {
             >
               Our Contact
             </h3>
-            {[
-              { label: "E-MAIL", content: (
-                <>
-                  <a href="mailto:sales@alltechcloudservices.com" className="hover:underline hover:text-blue-300 transition-colors duration-300">
-                    sales@alltechcloudservices.com
-                  </a>
-                  <br />
-                  <a href="mailto:info@alltechcloudservices.com" className="hover:underline hover:text-blue-300 transition-colors duration-300">
-                    info@alltechcloudservices.com
-                  </a>
-                </>
-              )},
-              { label: "PHONE", content: (
-                <a href="tel:+17273045613" className="hover:underline hover:text-blue-300 transition-colors duration-300">
-                  +1 (727) 304-5613
-                </a>
-              )},
-              { label: "SKYPE", content: (
-                <a href="skype:live:cid.ebf5e564e562929?chat" className="hover:underline hover:text-blue-300 transition-colors duration-300">
-                  live:cid.ebf5e564e562929
-                </a>
-              )},
-              { label: "ADDRESS", content: "5900 Balcones Drive, STE 1794 Austin, TX 78731" },
-            ].map((item) => (
+            {CONTACT_INFO.map((item) => (
               <p
                 key={item.label}
                 className="mb-4"
@@ -311,12 +382,7 @@ export default function Contact() {
               <strong>SOCIAL MEDIA</strong>
               <br />
               <div className="flex space-x-4 mt-2">
-                {[
-                  { href: "https://facebook.com", icon: <FaFacebookF className="w-5 h-5" /> },
-                  { href: "https://twitter.com", icon: <FaTwitter className="w-5 h-5" /> },
-                  { href: "https://instagram.com", icon: <FaInstagram className="w-5 h-5" /> },
-                  { href: "https://linkedin.com", icon: <FaLinkedinIn className="w-5 h-5" /> },
-                ].map((social, index) => (
+                {SOCIAL_LINKS.map((social, index) => (
                   <motion.a
                     key={index}
                     href={social.href}
@@ -325,6 +391,7 @@ export default function Contact() {
                     whileHover="hover"
                     variants={iconVariants}
                     className="text-white hover:text-blue-300 transition-colors duration-300"
+                    aria-label={`Follow us on ${social.label}`}
                   >
                     {social.icon}
                   </motion.a>
@@ -336,7 +403,7 @@ export default function Contact() {
       </section>
 
       {/* Map Section */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16"> {/* Reduced max width from 6xl to 4xl */}
+      <section ref={ref} className="w-full px-0 pb-16">
         <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200 relative">
           <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-full flex items-center shadow-lg z-10">
             <FaMapMarkerAlt className="w-5 h-5 mr-2" />
@@ -344,53 +411,70 @@ export default function Contact() {
               Our Location
             </span>
           </div>
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3443.162194584305!2d-97.75456308414442!3d30.359188081767776!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8644b5e8b2e5b5e1%3A0x3e4a2b5e5b5e5b5e!2s5900%20Balcones%20Dr%2C%20Austin%2C%20TX%2078731%2C%20USA!5e0!3m2!1sen!2sin!4v1698191234567!5m2!1sen!2sin"
-            width="100%"
-            height="600" // Height remains the same
-            style={{ border: 0 }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            className="rounded-xl"
-          />
+          {inView && (
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3443.162194584305!2d-97.75456308414442!3d30.359188081767776!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8644b5e8b2e5b5e1%3A0x3e4a2b5e5b5e5b5e!2s5900%20Balcones%20Dr%2C%20Austin%2C%20TX%2078731%2C%20USA!5e0!3m2!1sen!2sin!4v1698191234567!5m2!1sen!2sin"
+              width="100%"
+              height="400" // Increased height for better visibility
+              style={{ border: 0, display: 'block' }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="rounded-xl w-full sm:h-[300px] md:h-[350px] lg:h-[400px]" // Responsive height
+              title="Our Location Map"
+            />
+          )}
         </div>
       </section>
 
       {/* Thank You Popup */}
-      {showPopup && (
-        <motion.div
-          variants={popupVariants}
-          initial="hidden"
-          animate="visible"
-          className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
-        >
-          <div className="relative bg-white p-6 rounded-xl shadow-lg text-center max-w-sm w-full">
-            <Confetti
-              width={window.innerWidth}
-              height={window.innerHeight}
-              recycle={false}
-              numberOfPieces={200}
-              gravity={0.2}
-              className="absolute inset-0"
-            />
-            <h3 className="text-2xl font-bold mb-4 text-gray-800" style={{ fontFamily: "'Poppins', sans-serif" }}>
-              Thank You!
-            </h3>
-            <p className="text-gray-600 mb-6" style={{ fontFamily: "'Roboto', sans-serif" }}>
-              Your message has been successfully submitted. We will get back to you soon.
-            </p>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowPopup(false)}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
-            >
-              Close
-            </motion.button>
-          </div>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {showPopup && (
+          <motion.div
+            variants={popupVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
+            role="dialog"
+            aria-labelledby="popup-title"
+            aria-modal="true"
+          >
+            <div className="relative bg-white p-6 rounded-xl shadow-lg text-center max-w-sm w-full">
+              <Confetti
+                width={window.innerWidth}
+                height={window.innerHeight}
+                recycle={false}
+                numberOfPieces={150} // Reduced for performance
+                gravity={0.15}
+                className="absolute inset-0"
+              />
+              <h3
+                id="popup-title"
+                className="text-2xl font-bold mb-4 text-gray-800"
+                style={{ fontFamily: "'Poppins', sans-serif" }}
+              >
+                Thank You!
+              </h3>
+              <p
+                className="text-gray-600 mb-6"
+                style={{ fontFamily: "'Roboto', sans-serif" }}
+              >
+                Your message has been successfully submitted. We’ll get back to you soon.
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowPopup(false)}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
+                aria-label="Close popup"
+              >
+                Close
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

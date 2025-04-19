@@ -8,7 +8,7 @@ import Link from 'next/link';
 const Broker = () => {
   // List of RIRs with their logos and links
   const rirs = [
-    { name: "RIPE NCC", logo: "/images/r1.jpeg", url: "https://www.ripe.net" },
+
     { name: "AFRINIC", logo: "/images/r6.png", url: "https://afrinic.net" },
     { name: "ARIN", logo: "/images/r3.png", url: "https://www.arin.net" },
     { name: "APNIC", logo: "/images/r4.png", url: "https://www.apnic.net" },

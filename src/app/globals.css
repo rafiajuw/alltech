@@ -1,10 +1,25 @@
 @import "tailwindcss";
 
-
-
-
-
 /* globals.css */
+
+/* Scrollbar Hide */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Snap Scrolling */
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+.snap-center {
+  scroll-snap-align: center;
+}
+
+/* Gradient Background Animation */
 @keyframes gradientBG {
   0% {
     background-position: 0% 50%;
@@ -20,9 +35,10 @@
 .animate-gradient-bg {
   background: linear-gradient(45deg, #e0f2fe, #f3e8ff, #e0f2fe);
   background-size: 200% 200%;
-  animation: gradientBG 15s ease infinite;
+  animation: gradientBG 12s ease infinite; /* Reduced duration for performance */
 }
 
+/* FadeIn Animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -35,5 +51,5 @@
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn 0.3s ease-in-out forwards; /* Added forwards to maintain final state */
 }

@@ -12,7 +12,7 @@ const SOCIAL_LINKS = [
   { href: "https://facebook.com", icon: <FaFacebookF className="w-5 h-5" />, label: "Facebook" },
   { href: "https://twitter.com", icon: <FaTwitter className="w-5 h-5" />, label: "Twitter" },
   { href: "https://instagram.com", icon: <FaInstagram className="w-5 h-5" />, label: "Instagram" },
-  { href: "https://linkedin.com", icon: <FaLinkedinIn className="w-5 h-5" />, label: "LinkedIn" },
+  { href: "https://www.linkedin.com/company/all-tech-cloud-services/?viewAsMember=true", icon: <FaLinkedinIn className="w-5 h-5" />, label: "LinkedIn" },
 ];
 
 const CONTACT_INFO = [

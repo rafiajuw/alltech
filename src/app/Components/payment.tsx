@@ -8,9 +8,9 @@ const Payment = () => {
   const paymentMethods = [
     { src: "/images/p11.png", alt: "PayPal Logo" },
     { src: "/images/p2.jpeg", alt: "Mastercard Logo" },
-    { src: "/images/p13.png", alt: "Visa Logo" },
-    { src: "/images/p4.jpeg", alt: "Bank Transfer Logo" },
-    { src: "/images/p61.png", alt: "Wise Logo" },
+    { src: "/images/p13.png", alt: "payoneer Logo" },
+    { src: "/images/p5.png", alt: "Bank Transfer Logo" },
+    { src: "/images/p61.png", alt: "slash Logo" },
   ];
 
   // Animation for the heading

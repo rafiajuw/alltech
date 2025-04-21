@@ -11,6 +11,7 @@ const Payment = () => {
     { src: "/images/p13.png", alt: "payoneer Logo" },
     { src: "/images/p5.png", alt: "Bank Transfer Logo" },
     { src: "/images/p61.png", alt: "slash Logo" },
+    { src: "/images/p3.png", alt: "wise Logo" },
   ];
 
   // Animation for the heading

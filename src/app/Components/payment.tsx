@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 
 const Payment = () => {
   const paymentMethods = [
-    { src: "/images/p11.png", alt: "PayPal Logo" },
+    { src: "/images/p12.png", alt: "PayPal Logo" },
     { src: "/images/p2.jpeg", alt: "Mastercard Logo" },
     { src: "/images/p13.png", alt: "payoneer Logo" },
     { src: "/images/p5.png", alt: "Bank Transfer Logo" },

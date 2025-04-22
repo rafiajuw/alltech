@@ -72,7 +72,7 @@ export default function AboutUs() {
             <h2 className="text-3xl font-bold mb-4 text-gray-900">About Us</h2>
             <p className="text-lg text-gray-700">
               AllTech Cloud Services was founded in 2019 with the mission of supplying businesses with the most
-              dependable and cost-effective cloud solutions. Based in Saudi Arabia with an office in Jeddah, we are a
+              dependable and cost-effective cloud solutions. Based in  Austin, Texas, with an office at 5900 Balcones , we are a
               registered IPv4 broker with APNIC and committed to customer satisfaction.
             </p>
           </div>

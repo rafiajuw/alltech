@@ -50,7 +50,7 @@ export default function RootLayout({
         <Navbar/>
         {children}
         <Whatsup
-          phoneNumber="03452260280" // Replace with your WhatsApp number
+          phoneNumber="03132563182" // Replace with your WhatsApp number
           defaultMessage="Hello, I need assistance with IPv4!"
           popupMessage="Need help with IPv4? Chat with us!"
           popupDelay={500}

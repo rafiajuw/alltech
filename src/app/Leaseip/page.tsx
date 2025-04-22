@@ -1,9 +1,9 @@
 "use client";
 
-import LeaseIPv4 from '../Components/LeaseIPV4';
-import Image from 'next/image';
-import { motion, Variants } from 'framer-motion';
-import { useState } from 'react';
+import LeaseIPv4 from "../Components/LeaseIPV4";
+import Image from "next/image";
+import { motion, Variants } from "framer-motion";
+import { useState } from "react";
 
 interface FormData {
   name: string;
@@ -11,6 +11,13 @@ interface FormData {
   ipBlock: string;
   leaseDuration: string;
   message: string;
+}
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  ipBlock?: string;
+  leaseDuration?: string;
 }
 
 export default function LeaseIPv4Page() {
@@ -21,44 +28,66 @@ export default function LeaseIPv4Page() {
     leaseDuration: "",
     message: "",
   });
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [showSuccess, setShowSuccess] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [submitError, setSubmitError] = useState<string>("");
+
+  // Validate form fields
+  const validateForm = (): FormErrors => {
+    const errors: FormErrors = {};
+    if (!formData.name.trim()) errors.name = "Name is required";
+    if (!formData.email.trim()) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Please enter a valid email";
+    }
+    if (!formData.ipBlock.trim()) {
+      errors.ipBlock = "IP block is required";
+    } else if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2}$/.test(formData.ipBlock)) {
+      errors.ipBlock = "Please enter a valid IP block (e.g., 192.168.1.0/24)";
+    }
+    if (!formData.leaseDuration.trim()) errors.leaseDuration = "Lease duration is required";
+    return errors;
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    const errors = validateForm();
+    setFormErrors((prev) => ({ ...prev, [name]: errors[name as keyof FormErrors] }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
+    setSubmitError("");
     setShowSuccess(false);
+    setFormErrors({});
 
-    if (!formData.name || !formData.email || !formData.ipBlock || !formData.leaseDuration) {
-      setError("Please fill in all required fields.");
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setSubmitError("Please fix the errors in the form");
       return;
     }
 
     try {
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
+      const result = await response.json();
       if (!response.ok) {
-        throw new Error('Failed to send email');
+        throw new Error(result.error || "Failed to send email");
       }
 
-      const result = await response.json();
-      console.log(result);
       setShowSuccess(true);
       setFormData({ name: "", email: "", ipBlock: "", leaseDuration: "", message: "" });
-    } catch (err) {
-      setError("An error occurred while submitting the form. Please try again.");
-      console.error("Form submission error:", err);
+    } catch (error: unknown) {
+      console.error("Form submission error:", error);
+      const errorMessage = error instanceof Error ? error.message : "An error occurred while submitting the form. Please try again.";
+      setSubmitError(errorMessage);
     }
   };
 
@@ -199,7 +228,7 @@ export default function LeaseIPv4Page() {
             Submit a Lease IPv4 Request
           </h2>
           <div className="bg-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto border border-gray-100">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               {[
                 { label: "Your Name", type: "text", name: "name", placeholder: "Enter your name", required: true },
                 { label: "Your Email", type: "email", name: "email", placeholder: "Enter your email", required: true },
@@ -221,12 +250,19 @@ export default function LeaseIPv4Page() {
                     value={formData[field.name as keyof FormData]}
                     onChange={handleInputChange}
                     placeholder={field.placeholder}
-                    className="w-full p-3 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 bg-gray-50"
+                    className={`w-full p-3 text-base border ${formErrors[field.name as keyof FormErrors] ? "border-red-500" : "border-gray-200"} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 bg-gray-50`}
                     required={field.required}
                     whileHover="hover"
                     whileFocus="focus"
                     variants={fieldVariants}
+                    aria-invalid={formErrors[field.name as keyof FormErrors] ? "true" : "false"}
+                    aria-describedby={formErrors[field.name as keyof FormErrors] ? `${field.name}-error` : undefined}
                   />
+                  {formErrors[field.name as keyof FormErrors] && (
+                    <p id={`${field.name}-error`} className="text-red-500 text-sm mt-1" role="alert">
+                      {formErrors[field.name as keyof FormErrors]}
+                    </p>
+                  )}
                 </div>
               ))}
               <div>
@@ -248,10 +284,11 @@ export default function LeaseIPv4Page() {
                   whileHover="hover"
                   whileFocus="focus"
                   variants={fieldVariants}
+                  aria-label="Additional Details"
                 />
               </div>
-              {error && (
-                <p className="text-red-500 text-sm text-center">{error}</p>
+              {submitError && (
+                <p className="text-red-500 text-sm text-center" role="alert">{submitError}</p>
               )}
               <motion.button
                 type="submit"
@@ -259,6 +296,7 @@ export default function LeaseIPv4Page() {
                 whileHover="hover"
                 whileTap="tap"
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 text-base rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
+                aria-label="Submit Lease Request"
               >
                 Submit Request
               </motion.button>
@@ -273,19 +311,27 @@ export default function LeaseIPv4Page() {
           initial="hidden"
           animate="visible"
           className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
+          role="dialog"
+          aria-labelledby="success-title"
+          aria-modal="true"
         >
           <div className="bg-white p-6 rounded-xl shadow-lg text-center max-w-sm w-full">
-            <h3 className="text-2xl font-bold mb-4 text-gray-800" style={{ fontFamily: "'Poppins', sans-serif" }}>
+            <h3
+              id="success-title"
+              className="text-2xl font-bold mb-4 text-gray-800"
+              style={{ fontFamily: "'Poppins', sans-serif" }}
+            >
               Request Submitted!
             </h3>
             <p className="text-gray-600 mb-6" style={{ fontFamily: "'Roboto', sans-serif" }}>
-              Your lease request has been successfully submitted. Well get back to you soon.
+              Your lease request has been successfully submitted. We’ll get back to you soon.
             </p>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowSuccess(false)}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
+              aria-label="Close success message"
             >
               Close
             </motion.button>

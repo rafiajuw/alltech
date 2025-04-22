@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaMapMarkerAlt } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
+import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaMapMarkerAlt } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
+import Head from "next/head";
 import HeroSection from "../Components/HeroSection";
-import Confetti from 'react-confetti';
-import { useInView } from 'react-intersection-observer';
+import Confetti from "react-confetti";
+import { useInView } from "react-intersection-observer";
 
 // Constants for reusability
 const SOCIAL_LINKS = [
@@ -42,7 +43,7 @@ const CONTACT_INFO = [
     label: "SKYPE",
     content: (
       <a href="skype:live:cid.ebf5e564e562929?chat" className="hover:underline hover:text-blue-300 transition-colors duration-300">
-        live:cid.ebf5e564e562929
+        live:.cid.ca2886a158de9529
       </a>
     ),
   },
@@ -55,6 +56,7 @@ const SERVICES = ["Buy IPv4", "Sell IPv4", "Rent IPv4"];
 interface FormData {
   firstName: string;
   email: string;
+  // emailConfirm: string; // Uncomment to enable email confirmation field
   phone: string;
   service: string[];
   message: string;
@@ -63,11 +65,12 @@ interface FormData {
 interface FormErrors {
   firstName?: string;
   email?: string;
+  // emailConfirm?: string; // Uncomment to enable email confirmation field
   phone?: string;
 }
 
 // Type for string-valued FormData keys
-type StringFormDataKeys = keyof Pick<FormData, 'firstName' | 'email' | 'phone' | 'message'>;
+type StringFormDataKeys = keyof Pick<FormData, "firstName" | "email" | /* "emailConfirm" | */ "phone" | "message">;
 
 // Reusable Form Field Component
 const FormField = ({
@@ -80,7 +83,7 @@ const FormField = ({
   error,
 }: {
   type: string;
-  name: StringFormDataKeys; // Use refined type
+  name: StringFormDataKeys;
   placeholder: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
@@ -101,7 +104,7 @@ const FormField = ({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full p-3 text-base border ${error ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
+        className={`w-full p-3 text-base border ${error ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
         required={required}
         whileHover="hover"
         whileFocus="focus"
@@ -122,6 +125,7 @@ export default function Contact() {
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     email: "",
+    // emailConfirm: "", // Uncomment to enable email confirmation field
     phone: "",
     service: [],
     message: "",
@@ -141,9 +145,15 @@ export default function Contact() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = "Please enter a valid email";
     }
+    // Uncomment to enable email confirmation field
+    // if (!formData.emailConfirm.trim()) {
+    //   errors.emailConfirm = "Email confirmation is required";
+    // } else if (formData.emailConfirm !== formData.email) {
+    //   errors.emailConfirm = "Emails do not match";
+    // }
     if (!formData.phone.trim()) {
       errors.phone = "Phone number is required";
-    } else if (!/^\+?\d{10,15}$/.test(formData.phone.replace(/\D/g, ''))) {
+    } else if (!/^\+?\d{10,15}$/.test(formData.phone.replace(/\D/g, ""))) {
       errors.phone = "Please enter a valid phone number";
     }
     return errors;
@@ -183,17 +193,18 @@ export default function Contact() {
         body: JSON.stringify(formData),
       });
 
+      const result = await response.json();
       if (!response.ok) {
-        const result = await response.json();
         throw new Error(result.error || "Failed to send email.");
       }
 
       setShowPopup(true);
-      setFormData({ firstName: "", email: "", phone: "", service: [], message: "" });
+      setFormData({ firstName: "", email: "", /* emailConfirm: "", */ phone: "", service: [], message: "" });
       setFormErrors({});
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error sending email:", error);
-      setSubmitError("Failed to submit the form. Please check your connection and try again.");
+      const errorMessage = error instanceof Error ? error.message : "Failed to submit the form. Please try again later.";
+      setSubmitError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -222,11 +233,10 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-gray-100">
-      {/* SEO Meta Tags */}
-      <head>
+      <Head>
         <title>Contact Us | AllTech Cloud Services</title>
         <meta name="description" content="Get in touch with AllTech Cloud Services to buy, sell, or lease IPv4 addresses. Reach us via email, phone, or our Austin office." />
-      </head>
+      </Head>
 
       {/* Hero Section */}
       {HeroSection ? (
@@ -258,6 +268,8 @@ export default function Contact() {
               {([
                 { type: "text", name: "firstName", placeholder: "First Name", required: true },
                 { type: "email", name: "email", placeholder: "Email", required: true },
+                // Uncomment to enable email confirmation field
+                // { type: "email", name: "emailConfirm", placeholder: "Confirm Email", required: true },
                 { type: "tel", name: "phone", placeholder: "Enter Phone Number", required: true },
               ] as const).map((field) => (
                 <FormField
@@ -418,7 +430,7 @@ export default function Contact() {
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3443.162194584305!2d-97.75456308414442!3d30.359188081767776!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8644b5e8b2e5b5e1%3A0x3e4a2b5e5b5e5b5e!2s5900%20Balcones%20Dr%2C%20Austin%2C%20TX%2078731%2C%20USA!5e0!3m2!1sen!2sin!4v1698191234567!5m2!1sen!2sin"
               width="100%"
               height="400"
-              style={{ border: 0, display: 'block' }}
+              style={{ border: 0, display: "block" }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
@@ -462,7 +474,7 @@ export default function Contact() {
                 className="text-gray-600 mb-6"
                 style={{ fontFamily: "'Roboto', sans-serif" }}
               >
-                Your message has been successfully submitted. We’ll get back to you soon.
+                Your message has been sent to our team at AllTech Cloud Services. We’ll get back to you soon!
               </p>
               <motion.button
                 whileHover={{ scale: 1.05 }}

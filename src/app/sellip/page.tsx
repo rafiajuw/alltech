@@ -2,52 +2,86 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
-export default function Page() {
-  const [formData, setFormData] = useState({
+// Interfaces for type safety
+interface FormData {
+  name: string;
+  email: string;
+  ipBlock: string;
+  message: string;
+}
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  ipBlock?: string;
+}
+
+export default function SellPage() {
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
     ipBlock: "",
     message: "",
   });
-  const [status, setStatus] = useState<string | null>(null); // To show success/error messages
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [status, setStatus] = useState<string | null>(null);
+
+  // Validate form fields
+  const validateForm = (): FormErrors => {
+    const errors: FormErrors = {};
+    if (!formData.name.trim()) errors.name = "Name is required";
+    if (!formData.email.trim()) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Please enter a valid email";
+    }
+    if (!formData.ipBlock.trim()) {
+      errors.ipBlock = "IP block is required";
+    } else if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2}$/.test(formData.ipBlock)) {
+      errors.ipBlock = "Please enter a valid IP block (e.g., 192.168.1.0/24)";
+    }
+    return errors;
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    const errors = validateForm();
+    setFormErrors((prev) => ({ ...prev, [name]: errors[name as keyof FormErrors] }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setStatus(null); // Reset status
+    setStatus(null);
+    setFormErrors({});
 
-    // Validate required fields
-    if (!formData.name || !formData.email || !formData.ipBlock) {
-      setStatus('Please fill in all required fields');
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setStatus("Please fix the errors in the form");
       return;
     }
 
     try {
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const result = await response.json();
-
-      if (response.ok) {
-        setStatus('Request submitted successfully! We’ll get back to you soon.');
-        setFormData({ name: "", email: "", ipBlock: "", message: "" }); // Reset form
-      } else {
-        setStatus(result.error || 'Failed to submit request');
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to send email");
       }
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      setStatus('Failed to submit request');
+
+      setStatus("Request submitted successfully! We’ll get back to you soon.");
+      setFormData({ name: "", email: "", ipBlock: "", message: "" });
+    } catch (error: unknown) {
+      console.error("Error submitting form:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to submit request";
+      setStatus(errorMessage);
     }
   };
 
@@ -125,7 +159,7 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Buy IP Solution Section */}
+      {/* Sell IP Solution Section */}
       <section className="relative h-[50vh] overflow-hidden">
         <motion.div
           variants={buyIPBgVariants}
@@ -135,7 +169,7 @@ export default function Page() {
         >
           <Image
             src="/images/haxagon.jpg"
-            alt="Buy IP Solution Background"
+            alt="Sell IP Solution Background"
             fill
             className="object-cover"
             priority
@@ -177,7 +211,7 @@ export default function Page() {
         >
           <div className="md:w-1/2 mb-6 md:mb-0">
             <p className="text-gray-600 text-lg font-extrabold" style={{ fontFamily: "'Roboto', sans-serif" }}>
-              Selling IP Addresses<br />
+              Selling IP Addresses
             </p>
             <p className="text-black text-lg" style={{ fontFamily: "'Roboto', sans-serif" }}>
               We excel as an IPv4 block sales platform, linking buyers and sellers across the globe. We facilitate IPv4 transfers legally, safely, and efficiently.
@@ -231,7 +265,7 @@ export default function Page() {
           <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 text-center" style={{ fontFamily: "'Poppins', sans-serif" }}>
             Submit a Selling Request
           </h2>
-          <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl mx-auto">
+          <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl mx-auto" noValidate>
             <div>
               <motion.input
                 type="text"
@@ -239,12 +273,19 @@ export default function Page() {
                 value={formData.name}
                 onChange={handleInputChange}
                 placeholder="Your Name"
-                className="w-full p-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                className={`w-full p-3 text-base border ${formErrors.name ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
                 required
                 whileHover="hover"
                 whileFocus="focus"
                 variants={fieldVariants}
+                aria-invalid={formErrors.name ? "true" : "false"}
+                aria-describedby={formErrors.name ? "name-error" : undefined}
               />
+              {formErrors.name && (
+                <p id="name-error" className="text-red-500 text-sm mt-1" role="alert">
+                  {formErrors.name}
+                </p>
+              )}
             </div>
             <div>
               <motion.input
@@ -253,12 +294,19 @@ export default function Page() {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="Your Email"
-                className="w-full p-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                className={`w-full p-3 text-base border ${formErrors.email ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
                 required
                 whileHover="hover"
                 whileFocus="focus"
                 variants={fieldVariants}
+                aria-invalid={formErrors.email ? "true" : "false"}
+                aria-describedby={formErrors.email ? "email-error" : undefined}
               />
+              {formErrors.email && (
+                <p id="email-error" className="text-red-500 text-sm mt-1" role="alert">
+                  {formErrors.email}
+                </p>
+              )}
             </div>
             <div>
               <motion.input
@@ -267,12 +315,19 @@ export default function Page() {
                 value={formData.ipBlock}
                 onChange={handleInputChange}
                 placeholder="IP Block (e.g., 192.168.1.0/24)"
-                className="w-full p-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                className={`w-full p-3 text-base border ${formErrors.ipBlock ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
                 required
                 whileHover="hover"
                 whileFocus="focus"
                 variants={fieldVariants}
+                aria-invalid={formErrors.ipBlock ? "true" : "false"}
+                aria-describedby={formErrors.ipBlock ? "ipBlock-error" : undefined}
               />
+              {formErrors.ipBlock && (
+                <p id="ipBlock-error" className="text-red-500 text-sm mt-1" role="alert">
+                  {formErrors.ipBlock}
+                </p>
+              )}
             </div>
             <div>
               <motion.textarea
@@ -285,6 +340,7 @@ export default function Page() {
                 whileHover="hover"
                 whileFocus="focus"
                 variants={fieldVariants}
+                aria-label="Additional Details"
               />
             </div>
             <motion.button
@@ -293,11 +349,15 @@ export default function Page() {
               whileHover="hover"
               whileTap="tap"
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 text-base rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
+              aria-label="Submit Selling Request"
             >
               Submit Request
             </motion.button>
             {status && (
-              <p className={`text-center mt-4 ${status.includes('successfully') ? 'text-green-600' : 'text-red-600'}`}>
+              <p
+                className={`text-center mt-4 ${status.includes("successfully") ? "text-green-600" : "text-red-600"}`}
+                role="alert"
+              >
                 {status}
               </p>
             )}

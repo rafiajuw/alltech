@@ -1,36 +1,55 @@
-import nodemailer from 'nodemailer';
-import { NextResponse } from 'next/server';
+import nodemailer from "nodemailer";
 
-export async function POST(request: Request) {
-  const { name, email, message, service } = await request.json();
-
-  if (!name || !email || !message || !service) {
-    return NextResponse.json({ message: 'All fields are required' }, { status: 400 });
-  }
-
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.sendgrid.net',
-    port: 587,
-    auth: {
-      user: 'apikey',
-      pass: process.env.SENDGRID_API_KEY,
-    },
-  });
-
-  const mailOptions = {
-    from: email,
-    to: 'ipv4@alltechcloudservices.com',
-    subject: `New Form Submission from ${name} (${service})`,
-    text: `Name: ${name}\nEmail: ${email}\nService: ${service}\nMessage: ${message}`,
-  };
-
+export async function POST(req: Request) {
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info.response);
-    return NextResponse.json({ message: 'Email sent successfully' }, { status: 200 });
-  } catch (error) {
-    console.error('Error sending email:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ message: 'Error sending email', error: errorMessage }, { status: 500 });
+    const { firstName, email, phone, service, message } = await req.json();
+
+    const transporter = nodemailer.createTransport({
+      host: "mail.alltechcloudservices.com", // cPanel SMTP server
+      port: 587, // Use 465 for SSL, set secure: true
+      secure: false, // Set to true if using port 465
+      auth: {
+        user: process.env.CPANEL_EMAIL_USER, // admin@alltechcloudservices.com
+        pass: process.env.CPANEL_EMAIL_PASS, // cPanel email password
+      },
+    });
+
+    const mailOptions = {
+      from: '"AllTech Cloud Services" <admin@alltechcloudservices.com>', // Sender
+      to: "admin@alltechcloudservices.com", // Recipient (your cPanel email)
+      replyTo: email, // User’s email for replies
+      subject: `New Contact Form Submission from ${firstName}`,
+      text: `
+        Name: ${firstName}
+        Email: ${email}
+        Phone: ${phone}
+        Services: ${service.join(", ") || "None"}
+        Message: ${message}
+      `,
+      html: `
+        <h2>New Contact Form Submission</h2>
+        <p><strong>Name:</strong> ${firstName}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Phone:</strong> ${phone}</p>
+        <p><strong>Services:</strong> ${service.join(", ") || "None"}</p>
+        <p><strong>Message:</strong> ${message}</p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    return new Response(JSON.stringify({ message: "Email sent successfully" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error: unknown) {
+    console.error("Email error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Error sending email";
+    return new Response(
+      JSON.stringify({ message: "Error sending email", error: errorMessage }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 }

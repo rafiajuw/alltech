@@ -91,7 +91,7 @@ export default function AboutUsSection() {
           className="text-gray-600 text-center mb-16 text-base sm:text-lg leading-relaxed max-w-3xl mx-auto"
           style={{ fontFamily: "'Roboto', sans-serif" }}
         >
-          AllTechCloudServices was founded in 2019 with the mission of supplying businesses with the most dependable and cost-effective IP addresses. ATCS is a privately held company headquartered in Austin, Texas, with an office at 5900 Balcones Drive, STE 19704, Austin, TX 78731. We are a registered IPv4 broker on APNIC and have a strong commitment to customer satisfaction.
+          AllTechCloudServices was founded in 2019 with the mission of supplying businesses with the most dependable and cost-effective IP addresses. ATCS is a privately held company headquartered in Austin, Texas, with an office at 5900 Balcones Drive, STE 1794 Austin, TX 78731. We are a registered IPv4 broker on APNIC and have a strong commitment to customer satisfaction.
         </motion.p>
 
         {/* Stats */}

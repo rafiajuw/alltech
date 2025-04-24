@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
     const mailOptions = {
       from: '"AllTech Cloud Services" <admin@alltechcloudservices.com>', // Sender
-      to: "admin@alltechcloudservices.com", // Recipient (your cPanel email)
+      to: "ipv4@alltechcloudservices.com", // Recipient (your cPanel email)
       replyTo: email, // User’s email for replies
       subject: `New Contact Form Submission from ${firstName}`,
       text: `

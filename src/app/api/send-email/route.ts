@@ -10,7 +10,10 @@ export async function POST(req: Request) {
       secure: process.env.SMTP_SECURE === "true", // true for SSL (port 465)
       auth: {
         user: process.env.CPANEL_EMAIL_USER, // sales@alltechcloudservices.com
-        pass: process.env.CPANEL_EMAIL_PASS, // your email password
+        pass: process.env.CPANEL_EMAIL_PASS, // @lltech@1234
+      },
+      tls: {
+        rejectUnauthorized: false, // Ye SSL certificate issues ke liye
       },
     });
 

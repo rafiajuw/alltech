@@ -5,18 +5,18 @@ export async function POST(req: Request) {
     const { firstName, email, phone, service, message } = await req.json();
 
     const transporter = nodemailer.createTransport({
-      host: "mail.alltechcloudservices.com", // cPanel SMTP server
-      port: 587, // Use 465 for SSL, set secure: true
-      secure: false, // Set to true if using port 465
+      host: process.env.SMTP_HOST, // mail.alltechcloudservices.com
+      port: Number(process.env.SMTP_PORT), // 465
+      secure: process.env.SMTP_SECURE === "true", // true for SSL (port 465)
       auth: {
-        user: process.env.CPANEL_EMAIL_USER, // admin@alltechcloudservices.com
-        pass: process.env.CPANEL_EMAIL_PASS, // cPanel email password
+        user: process.env.CPANEL_EMAIL_USER, // sales@alltechcloudservices.com
+        pass: process.env.CPANEL_EMAIL_PASS, // your email password
       },
     });
 
     const mailOptions = {
-      from: '"AllTech Cloud Services" <admin@alltechcloudservices.com>', // Sender
-      to: "ipv4@alltechcloudservices.com", // Recipient (your cPanel email)
+      from: `"AllTech Cloud Services" <${process.env.EMAIL_FROM}>`, // "AllTech Cloud Services" <sales@alltechcloudservices.com>
+      to: "ipv4@alltechcloudservices.com", // Recipient
       replyTo: email, // User’s email for replies
       subject: `New Contact Form Submission from ${firstName}`,
       text: `

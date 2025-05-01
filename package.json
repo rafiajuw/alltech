@@ -14,7 +14,7 @@
     "@sanity/icons": "^3.7.0",
     "@sanity/image-url": "^1.1.0",
     "@sanity/vision": "^3.84.0",
-    "framer-motion": "^12.7.4",
+    "framer-motion": "^12.9.2",
     "motion": "^12.6.5",
     "next": "^15.3.0",
     "next-sanity": "^9.10.2",

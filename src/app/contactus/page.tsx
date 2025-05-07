@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -32,7 +33,7 @@ export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const [ref, inView] = useInView({
+  const [mapRef, mapInView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   });
@@ -121,9 +122,8 @@ export default function ContactForm() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <motion.div
-        ref={ref}
         initial={{ opacity: 0, y: 20 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="text-center mb-12"
       >
@@ -265,9 +265,25 @@ export default function ContactForm() {
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       Sending...
                     </span>
@@ -315,18 +331,58 @@ export default function ContactForm() {
           <div className="mt-8">
             <h3 className="text-lg font-semibold mb-4">Follow Us</h3>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-indigo-400 transition-colors">
+              <a
+                href="#"
+                className="text-gray-300 hover:text-indigo-400 transition-colors"
+              >
                 <FaFacebook className="w-5 h-5" />
               </a>
-              <a href="#" className="text-gray-300 hover:text-indigo-400 transition-colors">
+              <a
+                href="#"
+                className="text-gray-300 hover:text-indigo-400 transition-colors"
+              >
                 <FaTwitter className="w-5 h-5" />
               </a>
-              <a href="#" className="text-gray-300 hover:text-indigo-400 transition-colors">
+              <a
+                href="#"
+                className="text-gray-300 hover:text-indigo-400 transition-colors"
+              >
                 <FaLinkedin className="w-5 h-5" />
               </a>
-              <a href="#" className="text-gray-300 hover:text-indigo-400 transition-colors">
+              <a
+                href="#"
+                className="text-gray-300 hover:text-indigo-400 transition-colors"
+              >
                 <FaInstagram className="w-5 h-5" />
               </a>
+            </div>
+          </div>
+
+          {/* Map Section */}
+          <div ref={mapRef} className="mt-8 w-full">
+            <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200 relative">
+              <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-full flex items-center shadow-lg z-10">
+                <FaMapMarkerAlt className="w-5 h-5 mr-2" />
+                <span
+                  className="font-semibold"
+                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                >
+                  Our Location
+                </span>
+              </div>
+              {mapInView && (
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3443.162194584305!2d-97.75456308414442!3d30.359188081767776!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8644b5e8b2e5b5e1%3A0x3e4a2b5e5b5e5b5e!2s5900%20Balcones%20Dr%2C%20Austin%2C%20TX%2078731%2C%20USA!5e0!3m2!1sen!2sin!4v1698191234567!5m2!1sen!2sin"
+                  width="100%"
+                  height="300"
+                  style={{ border: 0, display: "block" }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="rounded-xl w-full h-[200px] sm:h-[250px] lg:h-[300px]"
+                  title="Our Location Map"
+                />
+              )}
             </div>
           </div>
         </div>
